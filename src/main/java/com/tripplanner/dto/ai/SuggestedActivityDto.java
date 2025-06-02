@@ -1,0 +1,60 @@
+package com.tripplanner.dto.ai;
+
+// DTO for an activity suggestion from the AI
+public class SuggestedActivityDto {
+    private String name;
+    private String city;
+    private String description;
+    private double expectedDurationHours;
+    private double estimatedCostEUR;
+
+    public SuggestedActivityDto() {}
+
+    public SuggestedActivityDto(String name, String city, String description, double expectedDurationHours, double estimatedCostEUR) {
+        this.name = name;
+        this.city = city;
+        this.description = description;
+        this.expectedDurationHours = expectedDurationHours;
+        this.estimatedCostEUR = estimatedCostEUR;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public double getExpectedDurationHours() {
+        return expectedDurationHours;
+    }
+
+    public void setExpectedDurationHours(double expectedDurationHours) {
+        this.expectedDurationHours = expectedDurationHours;
+    }
+
+    public double getEstimatedCostEUR() {
+        return estimatedCostEUR;
+    }
+
+    public void setEstimatedCostEUR(double estimatedCostEUR) {
+        this.estimatedCostEUR = estimatedCostEUR;
+    }
+}

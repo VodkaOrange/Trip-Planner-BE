@@ -1,0 +1,17 @@
+version: '3.7'
+name: trip-planner
+volumes:
+  pg_data:
+  pg_admin_data:
+
+services:
+  postgres:
+    image: postgis/postgis:13-3.0
+    volumes:
+      - pg_data:/usr/share/postgres/data
+    ports:
+      - '5442:5432'
+    environment:
+      POSTGRES_USER: praseto
+      POSTGRES_PASSWORD: tank
+      POSTGRES_DB: trip_planner_db
