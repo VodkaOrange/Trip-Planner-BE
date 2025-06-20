@@ -1,187 +1,109 @@
 package com.tripplanner.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tripplanner.dto.*;
-import com.tripplanner.dto.ai.AiErrorDto;
+import com.tripplanner.dto.AddActivityRequest;
+import com.tripplanner.dto.DestinationPreferencesRequest;
+import com.tripplanner.dto.InterestDto;
+import com.tripplanner.dto.ItineraryRequest;
+import com.tripplanner.dto.ItineraryResponse;
+import com.tripplanner.dto.UpdateInterestsRequest;
 import com.tripplanner.dto.ai.SuggestedActivityDto;
 import com.tripplanner.dto.ai.SuggestedCountryDto;
-import com.tripplanner.entity.Activity;
-import com.tripplanner.entity.DayPlan;
-import com.tripplanner.entity.Interest;
 import com.tripplanner.entity.Itinerary;
 import com.tripplanner.exception.ResourceNotFoundException;
-import com.tripplanner.service.GoogleAiService;
 import com.tripplanner.service.ItineraryService;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api")
 public class ItineraryController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ItineraryController.class);
+  private final ItineraryService itineraryService;
 
-    @Value("${app.planning.max-schedulable-hours-per-day:10.0}") // Default to 10 hours
-    private double maxSchedulableHoursPerDay;
+  public ItineraryController(ItineraryService itineraryService) {
 
-    @Autowired
-    private ItineraryService itineraryService;
+    this.itineraryService = itineraryService;
+  }
 
-    @Autowired
-    private GoogleAiService googleAiService;
+  @PostMapping("/trip/start")
+  public ResponseEntity<ItineraryResponse> createNewItinerary(@Valid @RequestBody ItineraryRequest itineraryRequest) {
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    Itinerary itinerary = itineraryService.createItinerary(itineraryRequest);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ItineraryResponse.fromEntity(itinerary));
+  }
 
-    @PostMapping("/trip/start")
-    public ResponseEntity<?> createNewItinerary(@Valid @RequestBody ItineraryRequest itineraryRequest) {
-        Itinerary itinerary = itineraryService.createItinerary(itineraryRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ItineraryResponse.fromEntity(itinerary));
-    }
+  @PostMapping("/trip/suggestions/countries")
+  public ResponseEntity<List<SuggestedCountryDto>> suggestCountriesByPreferences(
+      @Valid @RequestBody DestinationPreferencesRequest preferencesRequest) {
 
-    @PostMapping("/trip/suggestions/countries")
-    public ResponseEntity<?> suggestCountriesByPreferences(@Valid @RequestBody DestinationPreferencesRequest preferencesRequest) {
-        String aiResponse = "";
-        try {
-            aiResponse = googleAiService.suggestCountries(preferencesRequest.getPreferences());
-            logger.debug("AI Response for country suggestions: {}", aiResponse);
-            List<SuggestedCountryDto> suggestions = objectMapper.readValue(aiResponse, new TypeReference<List<SuggestedCountryDto>>() {});
-            return ResponseEntity.ok(suggestions);
-        } catch (JsonProcessingException jpe) {
-            logger.error("JSON Parsing Error for country suggestions AI Response: '{}', Exception: {}", aiResponse, jpe.getMessage());
-            try {
-                AiErrorDto errorDto = objectMapper.readValue(aiResponse, AiErrorDto.class);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDto);
-            } catch (JsonProcessingException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AiErrorDto("Invalid AI response format for country suggestions."));
-            }
-        } 
-    }
+    List<SuggestedCountryDto> suggestions = itineraryService.suggestCountries(preferencesRequest.getPreferences());
+    return ResponseEntity.ok(suggestions);
+  }
 
-    @GetMapping("/trip/{id}")
-    public ResponseEntity<?> getItinerary(@PathVariable Long id) {
-        Itinerary itinerary = itineraryService.getItineraryById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Itinerary", "id", id));
-        return ResponseEntity.ok(ItineraryResponse.fromEntity(itinerary));
-    }
+  @GetMapping("/trip/{id}")
+  public ResponseEntity<ItineraryResponse> getItinerary(@PathVariable Long id) {
 
-    @PostMapping("/trip/{itineraryId}/interests")
-    public ResponseEntity<?> updateItineraryInterests(@PathVariable Long itineraryId, @Valid @RequestBody UpdateInterestsRequest interestsRequest) {
-        Itinerary updatedItinerary = itineraryService.updateInterests(itineraryId, interestsRequest);
-        return ResponseEntity.ok(ItineraryResponse.fromEntity(updatedItinerary));
-    }
+    Itinerary itinerary = itineraryService.getItineraryById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Itinerary", "id", id));
+    return ResponseEntity.ok(ItineraryResponse.fromEntity(itinerary));
+  }
 
-    @GetMapping("/trip/interests")
-    public ResponseEntity<List<InterestDto>> listAllInterests() {
-        List<Interest> interests = itineraryService.getAllInterests();
-        List<InterestDto> interestDtos = interests.stream()
-                                                .map(InterestDto::fromEntity)
-                                                .collect(Collectors.toList());
-        return ResponseEntity.ok(interestDtos);
-    }
+  @PostMapping("/trip/{itineraryId}/interests")
+  public ResponseEntity<ItineraryResponse> updateItineraryInterests(@PathVariable Long itineraryId,
+      @Valid @RequestBody UpdateInterestsRequest interestsRequest) {
 
-    @PostMapping("/trip/{itineraryId}/days/{dayNumber}/activities")
-    public ResponseEntity<?> addActivityToDayPlan(@PathVariable Long itineraryId, 
-                                                @PathVariable int dayNumber, 
-                                                @Valid @RequestBody AddActivityRequest activityRequest) {
-        Itinerary updatedItinerary = itineraryService.addActivityToDay(itineraryId, dayNumber, activityRequest);
-        return ResponseEntity.ok(ItineraryResponse.fromEntity(updatedItinerary)); 
-    }
+    Itinerary updatedItinerary = itineraryService.updateInterests(itineraryId, interestsRequest);
+    return ResponseEntity.ok(ItineraryResponse.fromEntity(updatedItinerary));
+  }
 
-    @GetMapping("/trip/{itineraryId}/days/{dayNumber}/suggestions/activities")
-    public ResponseEntity<?> suggestActivitiesForDay(
-            @PathVariable Long itineraryId,
-            @PathVariable int dayNumber) {
-        String aiResponse = "";
-        try {
-            Itinerary itinerary = itineraryService.getItineraryById(itineraryId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Itinerary", "id", itineraryId));
+  @GetMapping("/trip/interests")
+  public ResponseEntity<List<InterestDto>> listAllInterests() {
 
-            if (itinerary.isFinalized()) {
-                throw new IllegalStateException("Cannot get activity suggestions for a finalized itinerary.");
-            }
+    List<InterestDto> interestDtos = itineraryService.getAllInterestsAsDto();
+    return ResponseEntity.ok(interestDtos);
+  }
 
-            DayPlan currentDayPlan = itinerary.getDayPlans().stream()
-                .filter(dp -> dp.getDayNumber() == dayNumber)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("DayPlan", "dayNumber", dayNumber));
+  @PostMapping("/trip/{itineraryId}/days/{dayNumber}/activities")
+  public ResponseEntity<ItineraryResponse> addActivityToDayPlan(@PathVariable Long itineraryId,
+      @PathVariable int dayNumber,
+      @Valid @RequestBody AddActivityRequest activityRequest) {
 
-            double hoursTakenToday = currentDayPlan.getActivities().stream()
-                                    .mapToDouble(Activity::getExpectedDurationHours)
-                                    .sum();
-            double availableHoursToday = Math.max(0, maxSchedulableHoursPerDay - hoursTakenToday);
+    Itinerary updatedItinerary = itineraryService.addActivityToDay(itineraryId, dayNumber, activityRequest);
+    return ResponseEntity.ok(ItineraryResponse.fromEntity(updatedItinerary));
+  }
 
-            Activity lastActivity = null;
-            if (!currentDayPlan.getActivities().isEmpty()) {
-                lastActivity = currentDayPlan.getActivities().get(currentDayPlan.getActivities().size() - 1);
-            }
+  @GetMapping("/trip/{itineraryId}/days/{dayNumber}/suggestions/activities")
+  public ResponseEntity<List<SuggestedActivityDto>> suggestActivitiesForDay(
+      @PathVariable Long itineraryId,
+      @PathVariable int dayNumber) {
 
-            List<String> interestNames = itinerary.getInterests().stream()
-                                                .map(Interest::getName)
-                                                .collect(Collectors.toList());
-            
-            List<String> previousActivitiesForDayNames = currentDayPlan.getActivities().stream()
-                .map(Activity::getName)
-                .collect(Collectors.toList());
+    List<SuggestedActivityDto> suggestions = itineraryService.suggestActivitiesForDay(itineraryId, dayNumber);
+    return ResponseEntity.ok(suggestions);
+  }
 
-            aiResponse = googleAiService.suggestActivities(
-                    itinerary.getDestination(),
-                    interestNames,
-                    itinerary.getBudgetRange(),
-                    dayNumber,
-                    itinerary.getNumberOfDays(),
-                    previousActivitiesForDayNames,
-                    availableHoursToday,
-                    lastActivity != null ? lastActivity.getCity() : null,
-                    lastActivity != null ? lastActivity.getName() : null
-            );
-            logger.debug("AI Response for activity suggestions: {}", aiResponse);
+  @PostMapping("/trip/{itineraryId}/finalize")
+  @PreAuthorize("isAuthenticated()")
+  public ResponseEntity<ItineraryResponse> finalizeItinerary(@PathVariable Long itineraryId) {
 
-            List<SuggestedActivityDto> suggestions = objectMapper.readValue(aiResponse, new TypeReference<List<SuggestedActivityDto>>() {});
-            return ResponseEntity.ok(suggestions);
+    Itinerary finalizedItinerary = itineraryService.finalizeItinerary(itineraryId);
+    return ResponseEntity.ok(ItineraryResponse.fromEntity(finalizedItinerary));
+  }
 
-        } catch (JsonProcessingException jpe) {
-            logger.error("JSON Parsing Error for activity suggestions AI Response: '{}', Exception: {}", aiResponse, jpe.getMessage());
-             try {
-                AiErrorDto errorDto = objectMapper.readValue(aiResponse, AiErrorDto.class);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDto);
-            } catch (JsonProcessingException e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AiErrorDto("Invalid AI response format for activity suggestions."));
-            }
-        } 
-    }
-    
-    @PostMapping("/trip/{itineraryId}/finalize")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> finalizeItinerary(@PathVariable Long itineraryId) {
-        Itinerary finalizedItinerary = itineraryService.finalizeItinerary(itineraryId);
-        return ResponseEntity.ok(ItineraryResponse.fromEntity(finalizedItinerary));
-    }
+  @GetMapping("/shared/{shareableLink}")
+  public ResponseEntity<ItineraryResponse> getSharedItinerary(@PathVariable String shareableLink) {
 
-    @GetMapping("/shared/{shareableLink}")
-    public ResponseEntity<?> getSharedItinerary(@PathVariable String shareableLink) {
-        Optional<Itinerary> itineraryOptional = itineraryService.getItineraryByShareableLink(shareableLink);
-        Itinerary itinerary = itineraryOptional.orElseThrow(() -> new ResourceNotFoundException("Shared itinerary not found with link: " + shareableLink));
-        
-        if (itinerary.isFinalized()) { 
-            return ResponseEntity.ok(ItineraryResponse.fromEntity(itinerary));
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AiErrorDto("This itinerary is not finalized or not available for sharing."));
-    }
+    Itinerary itinerary = itineraryService.getSharedItinerary(shareableLink);
+    return ResponseEntity.ok(ItineraryResponse.fromEntity(itinerary));
+  }
 }
