@@ -1,9 +1,22 @@
 package com.tripplanner.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -14,156 +27,157 @@ import java.util.Set;
 @Table(name = "itineraries")
 public class Itinerary {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @NotBlank
-    private String destination;
+  @NotBlank
+  private String destination;
 
-    @Positive
-    private int numberOfDays;
+  @Positive
+  private int numberOfDays;
 
-    private String budgetRange; // e.g., "EUR 500-1000", "EUR 1000-2000"
+  private String budgetRange; // e.g., "EUR 500-1000", "EUR 1000-2000"
 
-    @Column(unique = true)
-    private String shareableLink;
+  @Column(unique = true)
+  private String shareableLink;
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    @Column(name = "terms_accepted", nullable = false)
-    private boolean termsAccepted = false;
+  @Column(name = "terms_accepted", nullable = false)
+  private boolean termsAccepted = false;
 
-    @Column(name = "is_finalized", nullable = false)
-    private boolean finalized = false;
+  @Column(name = "is_finalized", nullable = false)
+  private boolean finalized = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id") // Nullable so that non-logged-in users can create (but not save)
-    private User user;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id") // Nullable so that non-logged-in users can create (but not save)
+  private User user;
 
-    @OneToMany(mappedBy = "itinerary", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("dayNumber ASC")
-    private List<DayPlan> dayPlans = new ArrayList<>();
+  @OneToMany(mappedBy = "itinerary", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("dayNumber ASC")
+  private List<DayPlan> dayPlans = new ArrayList<>();
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(name = "itinerary_interests",
-            joinColumns = @JoinColumn(name = "itinerary_id"),
-            inverseJoinColumns = @JoinColumn(name = "interest_id"))
-    private Set<Interest> interests = new HashSet<>();
+  @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+  @JoinTable(name = "itinerary_interests",
+      joinColumns = @JoinColumn(name = "itinerary_id"),
+      inverseJoinColumns = @JoinColumn(name = "interest_id"))
+  private Set<Interest> interests = new HashSet<>();
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+  @PrePersist
+  protected void onCreate() {
 
-    public Itinerary() {
-    }
+    createdAt = LocalDateTime.now();
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public Itinerary() {
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  }
 
-    public String getDestination() {
-        return destination;
-    }
+  public Long getId() {
 
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
+    return id;
+  }
 
-    public int getNumberOfDays() {
-        return numberOfDays;
-    }
+  public void setId(Long id) {
 
-    public void setNumberOfDays(int numberOfDays) {
-        this.numberOfDays = numberOfDays;
-    }
+    this.id = id;
+  }
 
-    public String getBudgetRange() {
-        return budgetRange;
-    }
+  public String getDestination() {
 
-    public void setBudgetRange(String budgetRange) {
-        this.budgetRange = budgetRange;
-    }
+    return destination;
+  }
 
-    public String getShareableLink() {
-        return shareableLink;
-    }
+  public void setDestination(String destination) {
 
-    public void setShareableLink(String shareableLink) {
-        this.shareableLink = shareableLink;
-    }
+    this.destination = destination;
+  }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+  public int getNumberOfDays() {
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    return numberOfDays;
+  }
 
-    public boolean isTermsAccepted() {
-        return termsAccepted;
-    }
+  public void setNumberOfDays(int numberOfDays) {
 
-    public void setTermsAccepted(boolean termsAccepted) {
-        this.termsAccepted = termsAccepted;
-    }
+    this.numberOfDays = numberOfDays;
+  }
 
-    public boolean isFinalized() {
-        return finalized;
-    }
+  public String getBudgetRange() {
 
-    public void setFinalized(boolean finalized) {
-        this.finalized = finalized;
-    }
+    return budgetRange;
+  }
 
-    public User getUser() {
-        return user;
-    }
+  public void setBudgetRange(String budgetRange) {
 
-    public void setUser(User user) {
-        this.user = user;
-    }
+    this.budgetRange = budgetRange;
+  }
 
-    public List<DayPlan> getDayPlans() {
-        return dayPlans;
-    }
+  public String getShareableLink() {
 
-    public void setDayPlans(List<DayPlan> dayPlans) {
-        this.dayPlans = dayPlans;
-    }
+    return shareableLink;
+  }
 
-    public void addDayPlan(DayPlan dayPlan) {
-        dayPlans.add(dayPlan);
-        dayPlan.setItinerary(this);
-    }
+  public void setShareableLink(String shareableLink) {
 
-    public void removeDayPlan(DayPlan dayPlan) {
-        dayPlans.remove(dayPlan);
-        dayPlan.setItinerary(null);
-    }
+    this.shareableLink = shareableLink;
+  }
 
-    public Set<Interest> getInterests() {
-        return interests;
-    }
+  public LocalDateTime getCreatedAt() {
 
-    public void setInterests(Set<Interest> interests) {
-        this.interests = interests;
-    }
+    return createdAt;
+  }
 
-    public void addInterest(Interest interest) {
-        this.interests.add(interest);
-        interest.getItineraries().add(this);
-    }
+  public void setCreatedAt(LocalDateTime createdAt) {
 
-    public void removeInterest(Interest interest) {
-        this.interests.remove(interest);
-        interest.getItineraries().remove(this);
-    }
+    this.createdAt = createdAt;
+  }
+
+  public boolean isTermsAccepted() {
+
+    return termsAccepted;
+  }
+
+  public void setTermsAccepted(boolean termsAccepted) {
+
+    this.termsAccepted = termsAccepted;
+  }
+
+  public boolean isFinalized() {
+
+    return finalized;
+  }
+
+  public void setFinalized(boolean finalized) {
+
+    this.finalized = finalized;
+  }
+
+  public User getUser() {
+
+    return user;
+  }
+
+  public void setUser(User user) {
+
+    this.user = user;
+  }
+
+  public List<DayPlan> getDayPlans() {
+
+    return dayPlans;
+  }
+
+  public void addDayPlan(DayPlan dayPlan) {
+
+    dayPlans.add(dayPlan);
+    dayPlan.setItinerary(this);
+  }
+
+  public Set<Interest> getInterests() {
+
+    return interests;
+  }
+
 }

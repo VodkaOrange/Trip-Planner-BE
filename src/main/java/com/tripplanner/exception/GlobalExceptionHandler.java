@@ -53,6 +53,13 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDto, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(AiServiceException.class)
+    public ResponseEntity<AiErrorDto> handleAccessDeniedException(AiServiceException ex) {
+        logger.warn("AI service error: {}", ex.getMessage());
+        AiErrorDto errorDto = new AiErrorDto(ex.getMessage());
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<AiErrorDto> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getFieldErrors().stream()
