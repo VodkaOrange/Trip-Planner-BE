@@ -1,14 +1,25 @@
 package com.tripplanner.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tripplanner.dto.DestinationPreferencesRequest;
 import com.tripplanner.dto.ItineraryRequest;
 import com.tripplanner.dto.ai.SuggestedCountryDto;
 import com.tripplanner.entity.Itinerary;
+import com.tripplanner.exception.GlobalExceptionHandler;
 import com.tripplanner.service.GoogleAiService;
 import com.tripplanner.service.ItineraryService;
-import com.tripplanner.exception.GlobalExceptionHandler;
-
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -19,201 +30,205 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 @WebMvcTest(ItineraryController.class)
-@Import(GlobalExceptionHandler.class) 
-public class ItineraryControllerTest {
+@Import(GlobalExceptionHandler.class)
+class ItineraryControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+  @Autowired
+  private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper; 
+  @Autowired
+  private ObjectMapper objectMapper;
 
-    @MockBean
-    private ItineraryService itineraryService;
+  @MockBean
+  private ItineraryService itineraryService;
 
-    @MockBean
-    private GoogleAiService googleAiService; 
+  @MockBean
+  private GoogleAiService googleAiService;
 
-    @Test
-    public void whenCreateNewItinerary_withValidRequest_thenReturnCreatedItinerary() throws Exception {
-        ItineraryRequest request = new ItineraryRequest();
-        request.setDestination("Paris");
-        request.setNumberOfDays(7);
-        request.setBudgetRange("EUR 1000-2000");
-        request.setTermsAccepted(true);
+  @Test
+  @WithMockUser
+  void whenCreateNewItinerary_withValidRequest_thenReturnCreatedItinerary() throws Exception {
+    ItineraryRequest request = new ItineraryRequest();
+    request.setDestination("Paris");
+    request.setNumberOfDays(7);
+    request.setBudgetRange("EUR 1000-2000");
+    request.setTermsAccepted(true);
 
-        Itinerary createdItinerary = new Itinerary();
-        createdItinerary.setId(1L);
-        createdItinerary.setDestination(request.getDestination());
-        createdItinerary.setNumberOfDays(request.getNumberOfDays());
-        createdItinerary.setBudgetRange(request.getBudgetRange());
-        createdItinerary.setTermsAccepted(true);
-        createdItinerary.setCreatedAt(LocalDateTime.now());
-        createdItinerary.setFinalized(false);
+    Itinerary createdItinerary = new Itinerary();
+    createdItinerary.setId(1L);
+    createdItinerary.setDestination(request.getDestination());
+    createdItinerary.setNumberOfDays(request.getNumberOfDays());
+    createdItinerary.setBudgetRange(request.getBudgetRange());
+    createdItinerary.setTermsAccepted(true);
+    createdItinerary.setCreatedAt(LocalDateTime.now());
+    createdItinerary.setFinalized(false);
 
-        when(itineraryService.createItinerary(any(ItineraryRequest.class))).thenReturn(createdItinerary);
+    when(itineraryService.createItinerary(any(ItineraryRequest.class))).thenReturn(createdItinerary);
 
-        mockMvc.perform(post("/api/trip/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.destination").value("Paris"))
-                .andExpect(jsonPath("$.numberOfDays").value(7))
-                .andExpect(jsonPath("$.budgetRange").value("EUR 1000-2000"))
-                .andExpect(jsonPath("$.termsAccepted").value(true))
-                .andExpect(jsonPath("$.finalized").value(false));
-    }
+    mockMvc.perform(post("/api/trip/start")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+            .with(csrf()))
+        .andExpect(status().isCreated())
+        .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+        .andExpect(jsonPath("$.id").value(1L))
+        .andExpect(jsonPath("$.destination").value("Paris"))
+        .andExpect(jsonPath("$.numberOfDays").value(7))
+        .andExpect(jsonPath("$.budgetRange").value("EUR 1000-2000"))
+        .andExpect(jsonPath("$.termsAccepted").value(true))
+        .andExpect(jsonPath("$.finalized").value(false));
+  }
 
-    @Test
-    public void whenCreateNewItinerary_withMissingDestination_thenReturnBadRequest() throws Exception {
-        ItineraryRequest request = new ItineraryRequest();
-        request.setNumberOfDays(5);
-        request.setTermsAccepted(true);
+  @Test
+  @WithMockUser
+  void whenCreateNewItinerary_withMissingDestination_thenReturnBadRequest() throws Exception {
+    ItineraryRequest request = new ItineraryRequest();
+    request.setNumberOfDays(5);
+    request.setTermsAccepted(true);
 
-        mockMvc.perform(post("/api/trip/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Destination cannot be blank")));
-    }
+    mockMvc.perform(post("/api/trip/start")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").exists())
+        .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Destination cannot be blank")));
+  }
 
-    @Test
-    public void whenCreateNewItinerary_withTermsNotAccepted_thenReturnBadRequest() throws Exception {
-        ItineraryRequest request = new ItineraryRequest();
-        request.setDestination("Rome");
-        request.setNumberOfDays(3);
-        request.setTermsAccepted(false); 
+  @Test
+  @WithMockUser
+  void whenCreateNewItinerary_withTermsNotAccepted_thenReturnBadRequest() throws Exception {
+    ItineraryRequest request = new ItineraryRequest();
+    request.setDestination("Rome");
+    request.setNumberOfDays(3);
+    request.setTermsAccepted(false);
 
-        mockMvc.perform(post("/api/trip/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Terms and conditions must be accepted")));
-    }
-    
-    @Test
-    public void whenCreateNewItinerary_withInvalidNumberOfDays_thenReturnBadRequest() throws Exception {
-        ItineraryRequest request = new ItineraryRequest();
-        request.setDestination("Berlin");
-        request.setNumberOfDays(0); 
-        request.setTermsAccepted(true);
+    mockMvc.perform(post("/api/trip/start")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").exists())
+        .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Terms and conditions must be accepted")));
+  }
 
-        mockMvc.perform(post("/api/trip/start")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists())
-                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Number of days must be at least 1")));
-    }
+  @Test
+  @WithMockUser
+  void whenCreateNewItinerary_withInvalidNumberOfDays_thenReturnBadRequest() throws Exception {
+    ItineraryRequest request = new ItineraryRequest();
+    request.setDestination("Berlin");
+    request.setNumberOfDays(0);
+    request.setTermsAccepted(true);
 
-    // Tests for suggestCountriesByPreferences endpoint
-    @Test
-    public void whenSuggestCountries_withValidPreferences_thenReturnSuggestions() throws Exception {
-        DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
-        preferencesRequest.setPreferences(List.of("nature", "history"));
+    mockMvc.perform(post("/api/trip/start")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(request))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").exists())
+        .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Number of days must be at least 1")));
+  }
 
-        List<SuggestedCountryDto> mockSuggestions = List.of(
-            new SuggestedCountryDto("CountryA", "Overview A", "placeholder_image_for_CountryA"),
-            new SuggestedCountryDto("CountryB", "Overview B", "placeholder_image_for_CountryB")
-        );
-        String mockJsonResponse = objectMapper.writeValueAsString(mockSuggestions);
+  @Test
+  @WithMockUser
+  void whenSuggestCountries_withValidPreferences_thenReturnSuggestions() throws Exception {
+    DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
+    preferencesRequest.setPreferences(List.of("nature", "history"));
 
-        when(googleAiService.suggestCountries(anyList())).thenReturn(mockJsonResponse);
+    List<SuggestedCountryDto> mockSuggestions = List.of(
+        new SuggestedCountryDto("CountryA", "Overview A", "placeholder_image_for_CountryA"),
+        new SuggestedCountryDto("CountryB", "Overview B", "placeholder_image_for_CountryB")
+    );
+    String mockJsonResponse = objectMapper.writeValueAsString(mockSuggestions);
 
-        mockMvc.perform(post("/api/trip/suggestions/countries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(preferencesRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].country").value("CountryA"))
-                .andExpect(jsonPath("$[1].country").value("CountryB"));
-    }
+    when(googleAiService.suggestCountries(anyList())).thenReturn(mockJsonResponse);
 
-    @Test
-    public void whenSuggestCountries_aiReturnsErrorJson_thenForwardError() throws Exception {
-        DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
-        preferencesRequest.setPreferences(List.of("beaches"));
+    mockMvc.perform(post("/api/trip/suggestions/countries")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(preferencesRequest))
+            .with(csrf()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].country").value("CountryA"))
+        .andExpect(jsonPath("$[1].country").value("CountryB"));
+  }
 
-        String errorJsonResponseFromAi = "{"error":"AI service unavailable"}";
-        when(googleAiService.suggestCountries(anyList())).thenReturn(errorJsonResponseFromAi);
+  @Test
+  @WithMockUser
+  void whenSuggestCountries_aiReturnsErrorJson_thenForwardError() throws Exception {
+    DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
+    preferencesRequest.setPreferences(List.of("beaches"));
 
-        mockMvc.perform(post("/api/trip/suggestions/countries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(preferencesRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("AI service unavailable"));
-    }
+    String errorJsonResponseFromAi = "{\"error\":\"AI service unavailable\"}";
+    when(googleAiService.suggestCountries(anyList())).thenReturn(errorJsonResponseFromAi);
 
-    @Test
-    public void whenSuggestCountries_aiReturnsMalformedJson_thenReturnGenericError() throws Exception {
-        DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
-        preferencesRequest.setPreferences(List.of("mountains"));
+    mockMvc.perform(post("/api/trip/suggestions/countries")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(preferencesRequest))
+            .with(csrf()))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.error").value("AI service unavailable"));
+  }
 
-        String malformedJsonResponseFromAi = "[{"country":"CountryC", "overview":"Overview C""; 
-        when(googleAiService.suggestCountries(anyList())).thenReturn(malformedJsonResponseFromAi);
+  @Test
+  @WithMockUser
+  void whenSuggestCountries_aiReturnsMalformedJson_thenReturnGenericError() throws Exception {
+    DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
+    preferencesRequest.setPreferences(List.of("mountains"));
 
-        mockMvc.perform(post("/api/trip/suggestions/countries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(preferencesRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.error").value("Invalid AI response format for country suggestions."));
-    }
+    String malformedJsonResponseFromAi = "[{\"country\":\"CountryC\", \"overview\":\"Overview C\"";
+    when(googleAiService.suggestCountries(anyList())).thenReturn(malformedJsonResponseFromAi);
 
-    @Test
-    public void whenSuggestCountries_withEmptyPreferences_thenReturnBadRequest() throws Exception {
-        DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
-        preferencesRequest.setPreferences(Collections.emptyList()); 
+    mockMvc.perform(post("/api/trip/suggestions/countries")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(preferencesRequest))
+            .with(csrf()))
+        .andExpect(status().isInternalServerError())
+        .andExpect(jsonPath("$.error").value("Invalid AI response format for country suggestions."));
+  }
 
-        mockMvc.perform(post("/api/trip/suggestions/countries")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(preferencesRequest)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Preferences cannot be empty")));
-    }
+  @Test
+  @WithMockUser
+  void whenSuggestCountries_withEmptyPreferences_thenReturnBadRequest() throws Exception {
+    DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
+    preferencesRequest.setPreferences(Collections.emptyList());
 
-    // Security Tests for finalizeItinerary
-    @Test
-    @WithMockUser // Simulates an authenticated user with default username "user" and role "USER"
-    public void whenFinalizeItinerary_asAuthenticatedUser_thenReturnsOk() throws Exception {
-        Long itineraryId = 1L;
-        Itinerary mockFinalizedItinerary = new Itinerary();
-        mockFinalizedItinerary.setId(itineraryId);
-        mockFinalizedItinerary.setFinalized(true);
-        mockFinalizedItinerary.setDestination("Test"); // Add necessary fields for ItineraryResponse
-        mockFinalizedItinerary.setNumberOfDays(1);
-        mockFinalizedItinerary.setCreatedAt(LocalDateTime.now());
+    mockMvc.perform(post("/api/trip/suggestions/countries")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(preferencesRequest))
+            .with(csrf()))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.error").value(org.hamcrest.Matchers.containsString("Preferences cannot be empty")));
+  }
 
-        when(itineraryService.finalizeItinerary(itineraryId)).thenReturn(mockFinalizedItinerary);
+  @Test
+  @WithMockUser
+  void whenFinalizeItinerary_asAuthenticatedUser_thenReturnsOk() throws Exception {
+    Long itineraryId = 1L;
+    Itinerary mockFinalizedItinerary = new Itinerary();
+    mockFinalizedItinerary.setId(itineraryId);
+    mockFinalizedItinerary.setFinalized(true);
+    mockFinalizedItinerary.setDestination("Test");
+    mockFinalizedItinerary.setNumberOfDays(1);
+    mockFinalizedItinerary.setCreatedAt(LocalDateTime.now());
 
-        mockMvc.perform(post("/api/trip/{itineraryId}/finalize", itineraryId)
-                .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
-    }
+    when(itineraryService.finalizeItinerary(itineraryId)).thenReturn(mockFinalizedItinerary);
 
-    @Test
-    @WithAnonymousUser // Simulates an anonymous user
-    public void whenFinalizeItinerary_asAnonymousUser_thenReturnsUnauthorized() throws Exception {
-        Long itineraryId = 1L;
+    mockMvc.perform(post("/api/trip/{itineraryId}/finalize", itineraryId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andExpect(status().isOk());
+  }
 
-        mockMvc.perform(post("/api/trip/{itineraryId}/finalize", itineraryId)
-                .contentType(MediaType.APPLICATION_JSON))
-                // For @PreAuthorize, it typically results in 403 Forbidden if authentication is missing for the filter chain,
-                // but the AuthEntryPointJwt turns it into 401 if no auth token is found.
-                .andExpect(status().isUnauthorized()); 
-    }
+  @Test
+  @WithAnonymousUser
+  void whenFinalizeItinerary_asAnonymousUser_thenReturnsUnauthorized() throws Exception {
+    Long itineraryId = 1L;
+
+    mockMvc.perform(post("/api/trip/{itineraryId}/finalize", itineraryId)
+            .contentType(MediaType.APPLICATION_JSON)
+            .with(csrf()))
+        .andExpect(status().isUnauthorized());
+  }
 }
