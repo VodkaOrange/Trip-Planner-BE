@@ -54,6 +54,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()       // Authentication endpoints
                 .requestMatchers("/api/trip/**").permitAll()       // Trip planning endpoints
                 .requestMatchers("/api/shared/**").permitAll()   // Shared itinerary endpoint
+                .requestMatchers("/actuator/**").permitAll() // Add this line
                 .anyRequest().authenticated()
             );
 
