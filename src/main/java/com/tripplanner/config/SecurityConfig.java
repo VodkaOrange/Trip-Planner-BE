@@ -20,7 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Ensure prePostEnabled is true for @PreAuthorize
+@EnableMethodSecurity()
 public class SecurityConfig {
 
     @Autowired
@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/shared/**").permitAll()   // Shared itinerary endpoint
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/healthz").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             );
 
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
