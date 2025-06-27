@@ -61,3 +61,4 @@ local.properties
 /.idea/*
 env.json
 **/.DS_Store
+service-account-key.json
