@@ -1,7 +1,8 @@
 # Stage 1: Build the JAR
 FROM gradle:8.10-jdk21 AS builder
 WORKDIR /app
-COPY build.gradle settings.gradle ./
+COPY build.gradle ./
+COPY settings.gradle* ./
 COPY src ./src
 RUN gradle build --no-daemon
 
