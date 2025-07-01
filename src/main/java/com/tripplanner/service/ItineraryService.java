@@ -21,6 +21,7 @@ import com.tripplanner.repository.DayPlanRepository;
 import com.tripplanner.repository.InterestRepository;
 import com.tripplanner.repository.ItineraryRepository;
 import com.tripplanner.repository.UserRepository;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -74,16 +75,26 @@ public class ItineraryService {
   @Transactional
   public Itinerary createItinerary(ItineraryRequest itineraryRequest) {
 
-    if (!itineraryRequest.isTermsAccepted()) {
-      throw new IllegalArgumentException("Terms and conditions must be accepted to create an itinerary.");
-    }
-
     Itinerary itinerary = new Itinerary();
     itinerary.setDestination(itineraryRequest.getDestination());
-    itinerary.setNumberOfDays(itineraryRequest.getNumberOfDays());
-    itinerary.setBudgetRange(itineraryRequest.getBudgetRange());
-    itinerary.setTermsAccepted(true);
     itinerary.setFinalized(false);
+    itinerary.setDepartureCity(itineraryRequest.getDepartureCity());
+    itinerary.setNumberOfAdults(itineraryRequest.getNumberOfAdults());
+    itinerary.setNumberOfChildren(itineraryRequest.getNumberOfChildren());
+    itinerary.setFromDate(itineraryRequest.getFromDate());
+    itinerary.setToDate(itineraryRequest.getToDate());
+
+    Set<Interest> interestsToSave = new HashSet<>();
+    if (itineraryRequest.getInterests() != null) {
+      for (Interest interest : itineraryRequest.getInterests()) {
+        if (interest.getName() != null) {
+          Optional<Interest> existingInterest = interestRepository.findByName(interest.getName());
+          existingInterest.ifPresent(interestsToSave::add);
+        }
+      }
+    }
+
+    itinerary.setInterests(interestsToSave);
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     if (authentication != null && authentication.isAuthenticated() && !(authentication.getPrincipal() instanceof String
@@ -93,7 +104,9 @@ public class ItineraryService {
       userOptional.ifPresent(itinerary::setUser);
     }
 
-    for (int i = 1; i <= itineraryRequest.getNumberOfDays(); i++) {
+    int numberOfDays = (int) ChronoUnit.DAYS.between(itineraryRequest.getFromDate(), itineraryRequest.getToDate()) + 1;
+
+    for (int i = 1; i <= numberOfDays; i++) {
       DayPlan dayPlan = new DayPlan(i);
       itinerary.addDayPlan(dayPlan);
     }
@@ -154,9 +167,11 @@ public class ItineraryService {
       throw new IllegalStateException("Cannot add activities to a finalized itinerary.");
     }
 
-    if (dayNumber <= 0 || dayNumber > itinerary.getNumberOfDays()) {
+    int numberOfDays = (int) ChronoUnit.DAYS.between(itinerary.getFromDate(), itinerary.getToDate()) + 1;
+
+    if (dayNumber <= 0 || dayNumber > numberOfDays) {
       throw new IllegalArgumentException("Invalid day number: " + dayNumber +
-          " for an itinerary with " + itinerary.getNumberOfDays() + " days.");
+          " for an itinerary with " + numberOfDays + " days.");
     }
 
     DayPlan dayPlan = itinerary.getDayPlans().stream()
@@ -225,7 +240,7 @@ public class ItineraryService {
       });
       cities.forEach(
           city ->
-            city.setImageUrl(googleCseService.searchImages(city.getCity() + ", " + city.getCountry()).getFirst()));
+              city.setImageUrl(googleCseService.searchImages(city.getCity() + ", " + city.getCountry()).getFirst()));
       return cities;
     }
     catch (JsonProcessingException jpe) {
@@ -272,26 +287,37 @@ public class ItineraryService {
         .map(Activity::getName)
         .toList();
 
+    int numberOfDays = (int) ChronoUnit.DAYS.between(itinerary.getFromDate(), itinerary.getToDate()) + 1;
+
+
     String aiResponse = googleAiService.suggestActivities(
         itinerary.getDestination(),
         interestNames,
-        dayNumber,
-        itinerary.getNumberOfDays(),
+        itinerary.getNumberOfAdults(),
+        itinerary.getNumberOfChildren(),
+        itinerary.getFromDate(),
+        itinerary.getToDate(),
+        currentDayPlan.getDayNumber(), // dayNumber
+        numberOfDays,
         previousActivitiesForDayNames,
         availableHoursToday,
         lastActivity != null ? lastActivity.getCity() : null,
-        lastActivity != null ? lastActivity.getName() : null
+        lastActivity != null ? lastActivity.getName() : null,
+        itinerary.getDepartureCity() // Optional, may be null
     );
     logger.debug("AI Response for activity suggestions: {}", aiResponse);
 
     try {
-      List<SuggestedActivityDto> suggestedActivities = objectMapper.readValue(aiResponse, new TypeReference<>(){});
+      List<SuggestedActivityDto> suggestedActivities = objectMapper.readValue(aiResponse, new TypeReference<>() {
+      });
       suggestedActivities.forEach(activity ->
-          activity.setImage(this.googleCseService.searchImages(activity.getName() + " " + activity.getDescription()).getFirst()));
+          activity.setImage(
+              this.googleCseService.searchImages(activity.getName() + " " + activity.getDescription()).getFirst()));
       return suggestedActivities;
     }
     catch (JsonProcessingException jpe) {
-      logger.error("JSON Parsing Error for activity suggestions AI Response: '{}', Exception: {}", aiResponse, jpe.getMessage());
+      logger.error("JSON Parsing Error for activity suggestions AI Response: '{}', Exception: {}", aiResponse,
+          jpe.getMessage());
       try {
         AiErrorDto errorDto = objectMapper.readValue(aiResponse, AiErrorDto.class);
         throw new AiServiceException(errorDto.getError());

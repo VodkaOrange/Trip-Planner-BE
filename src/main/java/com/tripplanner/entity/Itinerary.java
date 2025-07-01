@@ -16,7 +16,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -34,18 +34,10 @@ public class Itinerary {
   @NotBlank
   private String destination;
 
-  @Positive
-  private int numberOfDays;
-
-  private String budgetRange; // e.g., "EUR 500-1000", "EUR 1000-2000"
-
   @Column(unique = true)
   private String shareableLink;
 
   private LocalDateTime createdAt;
-
-  @Column(name = "terms_accepted", nullable = false)
-  private boolean termsAccepted = false;
 
   @Column(name = "is_finalized", nullable = false)
   private boolean finalized = false;
@@ -63,6 +55,21 @@ public class Itinerary {
       joinColumns = @JoinColumn(name = "itinerary_id"),
       inverseJoinColumns = @JoinColumn(name = "interest_id"))
   private Set<Interest> interests = new HashSet<>();
+
+  @Column
+  private String departureCity;
+
+  @Column
+  private Integer numberOfChildren;
+
+  @Column
+  private Integer numberOfAdults;
+
+  @Column
+  private LocalDate fromDate;
+
+  @Column
+  private LocalDate toDate;
 
   @PrePersist
   protected void onCreate() {
@@ -94,26 +101,6 @@ public class Itinerary {
     this.destination = destination;
   }
 
-  public int getNumberOfDays() {
-
-    return numberOfDays;
-  }
-
-  public void setNumberOfDays(int numberOfDays) {
-
-    this.numberOfDays = numberOfDays;
-  }
-
-  public String getBudgetRange() {
-
-    return budgetRange;
-  }
-
-  public void setBudgetRange(String budgetRange) {
-
-    this.budgetRange = budgetRange;
-  }
-
   public String getShareableLink() {
 
     return shareableLink;
@@ -132,16 +119,6 @@ public class Itinerary {
   public void setCreatedAt(LocalDateTime createdAt) {
 
     this.createdAt = createdAt;
-  }
-
-  public boolean isTermsAccepted() {
-
-    return termsAccepted;
-  }
-
-  public void setTermsAccepted(boolean termsAccepted) {
-
-    this.termsAccepted = termsAccepted;
   }
 
   public boolean isFinalized() {
@@ -180,4 +157,63 @@ public class Itinerary {
     return interests;
   }
 
+  public void setDayPlans(List<DayPlan> dayPlans) {
+
+    this.dayPlans = dayPlans;
+  }
+
+  public void setInterests(Set<Interest> interests) {
+
+    this.interests = interests;
+  }
+
+  public String getDepartureCity() {
+
+    return departureCity;
+  }
+
+  public void setDepartureCity(String departureCity) {
+
+    this.departureCity = departureCity;
+  }
+
+  public Integer getNumberOfChildren() {
+
+    return numberOfChildren;
+  }
+
+  public void setNumberOfChildren(Integer numberOfChildren) {
+
+    this.numberOfChildren = numberOfChildren;
+  }
+
+  public Integer getNumberOfAdults() {
+
+    return numberOfAdults;
+  }
+
+  public void setNumberOfAdults(Integer numberOfAdults) {
+
+    this.numberOfAdults = numberOfAdults;
+  }
+
+  public LocalDate getFromDate() {
+
+    return fromDate;
+  }
+
+  public void setFromDate(LocalDate fromDate) {
+
+    this.fromDate = fromDate;
+  }
+
+  public LocalDate getToDate() {
+
+    return toDate;
+  }
+
+  public void setToDate(LocalDate toDate) {
+
+    this.toDate = toDate;
+  }
 }

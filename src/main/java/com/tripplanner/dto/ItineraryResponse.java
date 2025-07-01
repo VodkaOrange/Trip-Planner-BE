@@ -7,135 +7,121 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ItineraryResponse {
-    private Long id;
-    private String destination;
-    private int numberOfDays;
-    private String budgetRange;
-    private String shareableLink;
-    private LocalDateTime createdAt;
-    private Long userId; // Only include if user is present
-    private boolean termsAccepted;
-    private boolean finalized; // New field
-    private List<DayPlanDto> dayPlans;
-    private Set<InterestDto> interests;
 
-    public ItineraryResponse(Long id, String destination, int numberOfDays, String budgetRange,
-                             String shareableLink, LocalDateTime createdAt, Long userId, boolean termsAccepted,
-                             boolean finalized, List<DayPlanDto> dayPlans, Set<InterestDto> interests) {
-        this.id = id;
-        this.destination = destination;
-        this.numberOfDays = numberOfDays;
-        this.budgetRange = budgetRange;
-        this.shareableLink = shareableLink;
-        this.createdAt = createdAt;
-        this.userId = userId;
-        this.termsAccepted = termsAccepted;
-        this.finalized = finalized;
-        this.dayPlans = dayPlans;
-        this.interests = interests;
-    }
+  private Long id;
+  private String destination;
+  private String shareableLink;
+  private LocalDateTime createdAt;
+  private Long userId; // Only include if user is present
+  private boolean finalized; // New field
+  private List<DayPlanDto> dayPlans;
+  private Set<InterestDto> interests;
 
-    public static ItineraryResponse fromEntity(Itinerary itinerary) {
-        return new ItineraryResponse(
-                itinerary.getId(),
-                itinerary.getDestination(),
-                itinerary.getNumberOfDays(),
-                itinerary.getBudgetRange(),
-                itinerary.getShareableLink(),
-                itinerary.getCreatedAt(),
-                itinerary.getUser() != null ? itinerary.getUser().getId() : null,
-                itinerary.isTermsAccepted(),
-                itinerary.isFinalized(), // Added finalized status
-                itinerary.getDayPlans().stream().map(DayPlanDto::fromEntity).collect(Collectors.toList()),
-                itinerary.getInterests().stream().map(InterestDto::fromEntity).collect(Collectors.toSet())
-        );
-    }
+  public ItineraryResponse(Long id, String destination,
+      String shareableLink, LocalDateTime createdAt, Long userId,
+      boolean finalized, List<DayPlanDto> dayPlans, Set<InterestDto> interests) {
 
-    public Long getId() {
-        return id;
-    }
+    this.id = id;
+    this.destination = destination;
+    this.shareableLink = shareableLink;
+    this.createdAt = createdAt;
+    this.userId = userId;
+    this.finalized = finalized;
+    this.dayPlans = dayPlans;
+    this.interests = interests;
+  }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+  public static ItineraryResponse fromEntity(Itinerary itinerary) {
 
-    public String getDestination() {
-        return destination;
-    }
+    return new ItineraryResponse(
+        itinerary.getId(),
+        itinerary.getDestination(),
+        itinerary.getShareableLink(),
+        itinerary.getCreatedAt(),
+        itinerary.getUser() != null ? itinerary.getUser().getId() : null,
+        itinerary.isFinalized(),
+        itinerary.getDayPlans().stream().map(DayPlanDto::fromEntity).collect(Collectors.toList()),
+        itinerary.getInterests().stream().map(InterestDto::fromEntity).collect(Collectors.toSet())
+    );
+  }
 
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
+  public Long getId() {
 
-    public int getNumberOfDays() {
-        return numberOfDays;
-    }
+    return id;
+  }
 
-    public void setNumberOfDays(int numberOfDays) {
-        this.numberOfDays = numberOfDays;
-    }
+  public void setId(Long id) {
 
-    public String getBudgetRange() {
-        return budgetRange;
-    }
+    this.id = id;
+  }
 
-    public void setBudgetRange(String budgetRange) {
-        this.budgetRange = budgetRange;
-    }
+  public String getDestination() {
 
-    public String getShareableLink() {
-        return shareableLink;
-    }
+    return destination;
+  }
 
-    public void setShareableLink(String shareableLink) {
-        this.shareableLink = shareableLink;
-    }
+  public void setDestination(String destination) {
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    this.destination = destination;
+  }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+  public String getShareableLink() {
 
-    public Long getUserId() {
-        return userId;
-    }
+    return shareableLink;
+  }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+  public void setShareableLink(String shareableLink) {
 
-    public boolean isTermsAccepted() {
-        return termsAccepted;
-    }
+    this.shareableLink = shareableLink;
+  }
 
-    public void setTermsAccepted(boolean termsAccepted) {
-        this.termsAccepted = termsAccepted;
-    }
+  public LocalDateTime getCreatedAt() {
 
-    public boolean isFinalized() {
-        return finalized;
-    }
+    return createdAt;
+  }
 
-    public void setFinalized(boolean finalized) {
-        this.finalized = finalized;
-    }
+  public void setCreatedAt(LocalDateTime createdAt) {
 
-    public List<DayPlanDto> getDayPlans() {
-        return dayPlans;
-    }
+    this.createdAt = createdAt;
+  }
 
-    public void setDayPlans(List<DayPlanDto> dayPlans) {
-        this.dayPlans = dayPlans;
-    }
+  public Long getUserId() {
 
-    public Set<InterestDto> getInterests() {
-        return interests;
-    }
+    return userId;
+  }
 
-    public void setInterests(Set<InterestDto> interests) {
-        this.interests = interests;
-    }
+  public void setUserId(Long userId) {
+
+    this.userId = userId;
+  }
+
+  public boolean isFinalized() {
+
+    return finalized;
+  }
+
+  public void setFinalized(boolean finalized) {
+
+    this.finalized = finalized;
+  }
+
+  public List<DayPlanDto> getDayPlans() {
+
+    return dayPlans;
+  }
+
+  public void setDayPlans(List<DayPlanDto> dayPlans) {
+
+    this.dayPlans = dayPlans;
+  }
+
+  public Set<InterestDto> getInterests() {
+
+    return interests;
+  }
+
+  public void setInterests(Set<InterestDto> interests) {
+
+    this.interests = interests;
+  }
 }

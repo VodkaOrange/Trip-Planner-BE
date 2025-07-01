@@ -4,6 +4,7 @@ import com.google.cloud.vertexai.VertexAI;
 import com.google.cloud.vertexai.api.GenerateContentResponse;
 import com.google.cloud.vertexai.generativeai.GenerativeModel;
 import com.google.cloud.vertexai.generativeai.ResponseHandler;
+import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,35 +69,75 @@ public class GoogleAiService {
         return generateContent(prompt);
     }
 
-    public String suggestActivities(String destination, List<String> interests,
-        int dayNumber, int totalTripDays, List<String> previousActivitiesToday,
-        double availableHoursToday, String lastActivityCity, String lastActivityName) {
+    public String suggestActivities(
+        String destination,
+        List<String> interests,
+        int numberOfAdults,
+        int numberOfChildren,
+        LocalDate fromDate,
+        LocalDate toDate,
+        int dayNumber,
+        int totalTripDays,
+        List<String> previousActivitiesToday,
+        double availableHoursToday,
+        String lastActivityCity,
+        String lastActivityName,
+        String departureCity
+    ) {
+        if (destination == null || destination.isEmpty()) {
+            throw new IllegalArgumentException("Destination cannot be null or empty");
+        }
+        if (fromDate == null || toDate == null) {
+            throw new IllegalArgumentException("fromDate and toDate cannot be null");
+        }
+        if (toDate.isBefore(fromDate)) {
+            throw new IllegalArgumentException("toDate cannot be before fromDate");
+        }
+        if (interests == null) {
+            interests = List.of();
+        }
+        if (previousActivitiesToday == null) {
+            previousActivitiesToday = List.of();
+        }
+
         String interestsString = String.join(", ", interests);
         String previousActivitiesString = String.join(", ", previousActivitiesToday);
 
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("You are an expert travel planner AI.\n");
-        promptBuilder.append(String.format("For a trip to %s for a user with interests in [%s], on Day %d of a %d-day trip:\n",
-            destination, interestsString, dayNumber, totalTripDays));
+        promptBuilder.append(String.format(
+            "For a trip to %s for a group of %d adult(s) and %d child(ren) with interests in [%s], from %s to %s, on Day %d of a %d-day trip:\n",
+            destination, numberOfAdults, numberOfChildren, interestsString, fromDate, toDate, dayNumber, totalTripDays
+        ));
 
-        promptBuilder.append(String.format("The user has %.1f hours available for activities for the rest of today.\n", availableHoursToday));
+        promptBuilder.append(String.format("The group has %.1f hours available for activities for the rest of today.\n", availableHoursToday));
 
         if (lastActivityName != null && !lastActivityName.isEmpty()) {
-            promptBuilder.append(String.format("The last activity selected today was '%s' in '%s'. Please suggest subsequent activities that are geographically convenient if possible and fit the remaining time.\n",
-                lastActivityName, (lastActivityCity != null ? lastActivityCity : destination)));
+            promptBuilder.append(String.format(
+                "The last activity selected today was '%s' in '%s'. Please suggest subsequent activities that are geographically convenient if possible and fit the remaining time.\n",
+                lastActivityName, (lastActivityCity != null ? lastActivityCity : destination)
+            ));
         } else {
             promptBuilder.append("This is the first set of suggestions for today, or the previous activity context is not available. Please suggest initial activities for the day.\n");
         }
 
-        promptBuilder.append(String.format("Consider the following activities already selected for today and try to avoid suggesting them again: [%s].\n", previousActivitiesString));
+        promptBuilder.append(String.format(
+            "Consider the following activities already selected for today and try to avoid suggesting them again: [%s].\n",
+            previousActivitiesString
+        ));
 
         if (dayNumber == totalTripDays) {
-            promptBuilder.append(String.format("Since this is the last day (Day %d of %d), prioritize activities that are convenient for departure, such as those near a major airport in %s or the planned departure city, and fit within the available hours.\n",
-                dayNumber, totalTripDays, destination));
+            String departureLocation = (departureCity != null && !departureCity.isEmpty()) ? departureCity : destination;
+            promptBuilder.append(String.format(
+                "Since this is the last day (Day %d of %d), prioritize activities that are convenient for departure, such as those near a major airport in %s, and fit within the available hours.\n",
+                dayNumber, totalTripDays, departureLocation
+            ));
         }
 
-        promptBuilder.append("Please suggest up to 3 distinct activities. Each suggested activity's 'expectedDurationHours' "
-            + "must be less than or equal to the available %.1f hours. ");
+        promptBuilder.append(String.format(
+            "Please suggest up to 3 distinct activities suitable for %d adult(s) and %d child(ren). Each suggested activity's 'expectedDurationHours' must be less than or equal to the available %.1f hours.\n",
+            numberOfAdults, numberOfChildren, availableHoursToday
+        ));
         promptBuilder.append("If multiple activities are suggested, their combined duration is not constrained, but individual activities must be plannable within the remaining time. Prioritize variety and user interests.\n");
 
         promptBuilder.append("For each activity, provide the following details in JSON format:\n"
@@ -109,14 +150,14 @@ public class GoogleAiService {
             + "Return the output as a single JSON array of activity objects. If no activities can fit the criteria (especially time), return an empty JSON array [].\n"
             + "Example:\n"
             + "[\n"
-            + "  {\"name\": \"Example Museum Visit\", \"city\": \"%s\", \"description\": \"Explore fascinating exhibits.\", \"expectedDurationHours\": 2, \"estimatedCostEUR\": 15}\n"
+            + "  {\"name\": \"Example Museum Visit\", \"city\": \"%s\", \"description\": \"Explore fascinating exhibits.\", \"expectedDurationHours\": 2, \"estimatedCostEUR\": 15, \"address\": \"%s, Example Country, Museum Street, 123\"}\n"
             + "]\n"
             + "Do not include any explanatory text outside of the JSON array.");
 
         String prompt = String.format(promptBuilder.toString(),
-            availableHoursToday, // For the duration constraint message
             destination,         // For city in activity description
-            destination          // For city in example
+            destination,         // For city in example
+            destination          // For city in example address
         );
         return generateContent(prompt);
     }

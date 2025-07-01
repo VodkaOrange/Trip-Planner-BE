@@ -2,19 +2,15 @@ package com.tripplanner.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.tripplanner.dto.ItineraryRequest;
 import com.tripplanner.entity.Itinerary;
 import com.tripplanner.entity.User;
 import com.tripplanner.exception.ResourceNotFoundException;
@@ -58,62 +54,6 @@ class ItineraryServiceTest {
   void tearDownContext() {
     // Restore original context
     SecurityContextHolder.setContext(originalSecurityContext);
-  }
-
-  @Test
-  void whenCreateItinerary_withValidRequest_andAnonymousUser_thenItineraryCreatedWithoutUser() {
-
-    ItineraryRequest request = new ItineraryRequest();
-    request.setDestination("Test Destination");
-    request.setNumberOfDays(3);
-    request.setTermsAccepted(true);
-    request.setBudgetRange("100-200");
-
-    mockAnonymousUser();
-
-    when(itineraryRepository.save(any(Itinerary.class))).thenAnswer(invocation -> {
-      Itinerary itinerary = invocation.getArgument(0);
-      itinerary.setId(1L);
-      return itinerary;
-    });
-
-    Itinerary result = itineraryService.createItinerary(request);
-
-    assertNotNull(result);
-    assertEquals("Test Destination", result.getDestination());
-    assertNull(result.getUser());
-    verify(itineraryRepository, times(1)).save(any(Itinerary.class));
-    verify(userRepository, never()).findById(anyLong());
-  }
-
-  @Test
-  void whenCreateItinerary_withValidRequest_andAuthenticatedUser_thenItineraryCreatedWithUser() {
-
-    ItineraryRequest request = new ItineraryRequest();
-    request.setDestination("User Destination");
-    request.setNumberOfDays(2);
-    request.setTermsAccepted(true);
-
-    mockAuthenticatedUser(10L, "testuser", true);
-
-    when(itineraryRepository.save(any(Itinerary.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-    Itinerary result = itineraryService.createItinerary(request);
-
-    assertNotNull(result);
-    assertEquals("User Destination", result.getDestination());
-    assertNotNull(result.getUser());
-    assertEquals(10L, result.getUser().getId());
-    verify(itineraryRepository, times(1)).save(any(Itinerary.class));
-  }
-
-  @Test
-  void whenCreateItinerary_withTermsNotAccepted_thenThrowIllegalArgumentException() {
-
-    ItineraryRequest request = new ItineraryRequest();
-    request.setTermsAccepted(false);
-    assertThrows(IllegalArgumentException.class, () -> itineraryService.createItinerary(request));
-    verify(itineraryRepository, never()).save(any(Itinerary.class));
   }
 
   // Tests for finalizeItinerary

@@ -1,53 +1,95 @@
 package com.tripplanner.dto;
 
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.Min;
+import com.tripplanner.entity.Interest;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ItineraryRequest {
 
-    @NotBlank(message = "Destination cannot be blank")
-    private String destination;
+  @NotBlank(message = "Destination cannot be blank")
+  private String destination;
 
-    @NotNull(message = "Number of days cannot be null")
-    @Min(value = 1, message = "Number of days must be at least 1")
-    private Integer numberOfDays;
+  private String departureCity;
 
-    private String budgetRange;
+  private Integer numberOfChildren;
 
-    @AssertTrue(message = "Terms and conditions must be accepted to create an itinerary")
-    private boolean termsAccepted;
+  private Integer numberOfAdults;
 
-    public String getDestination() {
-        return destination;
-    }
+  private LocalDate fromDate;
 
-    public void setDestination(String destination) {
-        this.destination = destination;
-    }
+  private LocalDate toDate;
 
-    public Integer getNumberOfDays() {
-        return numberOfDays;
-    }
+  private Set<Interest> interests = new HashSet<>();
 
-    public void setNumberOfDays(Integer numberOfDays) {
-        this.numberOfDays = numberOfDays;
-    }
+  public String getDestination() {
 
-    public String getBudgetRange() {
-        return budgetRange;
-    }
+    return destination;
+  }
 
-    public void setBudgetRange(String budgetRange) {
-        this.budgetRange = budgetRange;
-    }
+  public void setDestination(String destination) {
 
-    public boolean isTermsAccepted() {
-        return termsAccepted;
-    }
+    this.destination = destination;
+  }
 
-    public void setTermsAccepted(boolean termsAccepted) {
-        this.termsAccepted = termsAccepted;
-    }
+  public String getDepartureCity() {
+
+    return departureCity;
+  }
+
+  public void setDepartureCity(String departureCity) {
+
+    this.departureCity = departureCity;
+  }
+
+  public Integer getNumberOfChildren() {
+
+    return numberOfChildren;
+  }
+
+  public void setNumberOfChildren(Integer numberOfChildren) {
+
+    this.numberOfChildren = numberOfChildren;
+  }
+
+  public Integer getNumberOfAdults() {
+
+    return numberOfAdults;
+  }
+
+  public void setNumberOfAdults(Integer numberOfAdults) {
+
+    this.numberOfAdults = numberOfAdults;
+  }
+
+  public LocalDate getFromDate() {
+
+    return fromDate;
+  }
+
+  public void setFromDate(LocalDate fromDate) {
+
+    this.fromDate = fromDate;
+  }
+
+  public LocalDate getToDate() {
+
+    return toDate;
+  }
+
+  public void setToDate(LocalDate toDate) {
+
+    this.toDate = toDate;
+  }
+
+  public Set<Interest> getInterests() {
+
+    return interests;
+  }
+
+  public void setInterests(Set<Interest> interests) {
+
+    this.interests = interests;
+  }
 }
