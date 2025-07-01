@@ -9,7 +9,7 @@ import com.tripplanner.dto.ItineraryRequest;
 import com.tripplanner.dto.UpdateInterestsRequest;
 import com.tripplanner.dto.ai.AiErrorDto;
 import com.tripplanner.dto.ai.SuggestedActivityDto;
-import com.tripplanner.dto.ai.SuggestedCountryDto;
+import com.tripplanner.dto.ai.SuggestedCityDto;
 import com.tripplanner.entity.Activity;
 import com.tripplanner.entity.DayPlan;
 import com.tripplanner.entity.Interest;
@@ -56,9 +56,11 @@ public class ItineraryService {
 
   private final ObjectMapper objectMapper;
 
+  private final GoogleCseService googleCseService;
+
   public ItineraryService(ItineraryRepository itineraryRepository, UserRepository userRepository,
       InterestRepository interestRepository, DayPlanRepository dayPlanRepository,
-      GoogleAiService googleAiService, ObjectMapper objectMapper) {
+      GoogleAiService googleAiService, ObjectMapper objectMapper, GoogleCseService googleCseService) {
 
     this.itineraryRepository = itineraryRepository;
     this.userRepository = userRepository;
@@ -66,6 +68,7 @@ public class ItineraryService {
     this.dayPlanRepository = dayPlanRepository;
     this.googleAiService = googleAiService;
     this.objectMapper = objectMapper;
+    this.googleCseService = googleCseService;
   }
 
   @Transactional
@@ -213,13 +216,18 @@ public class ItineraryService {
     return itineraryRepository.save(itinerary);
   }
 
-  public List<SuggestedCountryDto> suggestCountries(List<String> preferences) throws AiServiceException {
+  public List<SuggestedCityDto> suggestCities(List<String> preferences) throws AiServiceException {
 
-    String aiResponse = googleAiService.suggestCountries(preferences);
-    logger.debug("AI Response for country suggestions: {}", aiResponse);
+    String aiResponse = googleAiService.suggestCities(preferences);
+    logger.debug("AI Response for cities suggestions: {}", aiResponse);
     try {
-      return objectMapper.readValue(aiResponse, new TypeReference<>() {
+      List<SuggestedCityDto> cities = objectMapper.readValue(aiResponse, new TypeReference<>() {
       });
+      cities.forEach(
+          city ->
+              city.setImageUrl(googleCseService.searchImages(city.getCity() + " scenery").getLast())
+      );
+      return cities;
     }
     catch (JsonProcessingException jpe) {
       logger.error("JSON Parsing Error for country suggestions AI Response: '{}', Exception: {}", aiResponse, jpe.getMessage());

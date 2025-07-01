@@ -7,7 +7,7 @@ import com.tripplanner.dto.ItineraryRequest;
 import com.tripplanner.dto.ItineraryResponse;
 import com.tripplanner.dto.UpdateInterestsRequest;
 import com.tripplanner.dto.ai.SuggestedActivityDto;
-import com.tripplanner.dto.ai.SuggestedCountryDto;
+import com.tripplanner.dto.ai.SuggestedCityDto;
 import com.tripplanner.entity.Itinerary;
 import com.tripplanner.exception.ResourceNotFoundException;
 import com.tripplanner.service.ItineraryService;
@@ -43,11 +43,11 @@ public class ItineraryController {
     return ResponseEntity.status(HttpStatus.CREATED).body(ItineraryResponse.fromEntity(itinerary));
   }
 
-  @PostMapping("/trip/suggestions/countries")
-  public ResponseEntity<List<SuggestedCountryDto>> suggestCountriesByPreferences(
+  @PostMapping("/trip/suggestions/cities")
+  public ResponseEntity<List<SuggestedCityDto>> suggestCitiesByPreferences(
       @Valid @RequestBody DestinationPreferencesRequest preferencesRequest) {
 
-    List<SuggestedCountryDto> suggestions = itineraryService.suggestCountries(preferencesRequest.getPreferences());
+    List<SuggestedCityDto> suggestions = itineraryService.suggestCities(preferencesRequest.getPreferences());
     return ResponseEntity.ok(suggestions);
   }
 

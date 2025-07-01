@@ -44,20 +44,24 @@ public class GoogleAiService {
         }
     }
 
-    public String suggestCountries(List<String> preferences) {
+    public String suggestCities(List<String> preferences) {
         String preferencesString = String.join(", ", preferences);
         String prompt = String.format(
             "You are an expert travel advisor.\n"
-                + "Suggest exactly three distinct countries for a tourist whose preferences are: [%s].\n"
-                + "For each country, provide:\n"
+                + "Suggest exactly three distinct cities for a tourist whose preferences are: [%s].\n"
+                + "For each city, provide:\n"
                 + "- country: The name of the country (String).\n"
+                + "- city: The name of the city (String).\n"
                 + "- overview: A compelling two-sentence overview of why it matches the preferences (String).\n"
                 + "- imageUrl: Try to provide a direct URL to a publicly usable, high-quality, and directly embeddable image that represents the country and its highlighted aspects (e.g., from Wikimedia Commons, Pexels, Unsplash, or similar open-license sources). If you cannot find a suitable real image URL, then use the specific string 'placeholder_image_for_COUNTRY_NAME' where COUNTRY_NAME is the actual name of the country (e.g., 'placeholder_image_for_Italy'). (String).\n"
                 + "Format the output STRICTLY as a single JSON array of objects. Do not include any text outside this JSON array.\n"
                 + "Example if real image found for Italy but not Greece:\n"
                 + "[\n"
-                + "  {\"country\": \"Italy\", \"overview\": \"Italy offers stunning architecture and ancient Roman ruins. Its sunny Mediterranean weather is perfect for exploring beautiful coastlines.\", \"imageUrl\": \"https://example.com/italy.jpg\"},\n"
-                + "  {\"country\": \"Greece\", \"overview\": \"Greece is renowned for its ancient civilizations like the Acropolis in Athens. It also boasts beautiful islands with sunny weather.\", \"imageUrl\": \"placeholder_image_for_Greece\"}\n"
+                + "  {\"country\": \"Italy\", \"city\": \"Milan\",\"overview\": \"Italy offers stunning architecture and "
+                + "ancient Roman ruins. "
+                + "Its sunny Mediterranean weather is perfect for exploring beautiful coastlines.\", \"imageUrl\": \"https://example.com/italy.jpg\"},\n"
+                + "  {\"country\": \"Greece\",\"city\": \"Athens\", \"overview\": \"Greece is renowned for its ancient "
+                + "civilizations like the Acropolis in Athens. It also boasts beautiful islands with sunny weather.\", \"imageUrl\": \"placeholder_image_for_Greece\"}\n"
                 + "]",
             preferencesString
         );
