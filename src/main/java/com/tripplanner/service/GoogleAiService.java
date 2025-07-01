@@ -68,7 +68,7 @@ public class GoogleAiService {
         return generateContent(prompt);
     }
 
-    public String suggestActivities(String destination, List<String> interests, String budgetRange,
+    public String suggestActivities(String destination, List<String> interests,
         int dayNumber, int totalTripDays, List<String> previousActivitiesToday,
         double availableHoursToday, String lastActivityCity, String lastActivityName) {
         String interestsString = String.join(", ", interests);
@@ -76,8 +76,8 @@ public class GoogleAiService {
 
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("You are an expert travel planner AI.\n");
-        promptBuilder.append(String.format("For a trip to %s for a user with interests in [%s], a budget of \"%s\", on Day %d of a %d-day trip:\n",
-            destination, interestsString, budgetRange, dayNumber, totalTripDays));
+        promptBuilder.append(String.format("For a trip to %s for a user with interests in [%s], on Day %d of a %d-day trip:\n",
+            destination, interestsString, dayNumber, totalTripDays));
 
         promptBuilder.append(String.format("The user has %.1f hours available for activities for the rest of today.\n", availableHoursToday));
 
@@ -95,7 +95,8 @@ public class GoogleAiService {
                 dayNumber, totalTripDays, destination));
         }
 
-        promptBuilder.append("Please suggest up to 4 distinct activities. Each suggested activity's 'expectedDurationHours' must be less than or equal to the available %.1f hours. ");
+        promptBuilder.append("Please suggest up to 3 distinct activities. Each suggested activity's 'expectedDurationHours' "
+            + "must be less than or equal to the available %.1f hours. ");
         promptBuilder.append("If multiple activities are suggested, their combined duration is not constrained, but individual activities must be plannable within the remaining time. Prioritize variety and user interests.\n");
 
         promptBuilder.append("For each activity, provide the following details in JSON format:\n"
@@ -104,6 +105,7 @@ public class GoogleAiService {
             + "- description: A brief, engaging one-sentence description of the activity. (String)\n"
             + "- expectedDurationHours: Estimated duration of the activity in hours (Number, e.g., 2.5). This MUST be less than or equal to the available hours for the day.\n"
             + "- estimatedCostEUR: Estimated cost of the activity in EUR (Number, e.g., 50).\n"
+            + "- address: Full address of the activity in the format - city, country, street name, street number (String)\n"
             + "Return the output as a single JSON array of activity objects. If no activities can fit the criteria (especially time), return an empty JSON array [].\n"
             + "Example:\n"
             + "[\n"

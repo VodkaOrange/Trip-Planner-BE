@@ -225,8 +225,7 @@ public class ItineraryService {
       });
       cities.forEach(
           city ->
-              city.setImageUrl(googleCseService.searchImages(city.getCity() + " scenery").getLast())
-      );
+            city.setImageUrl(googleCseService.searchImages(city.getCity() + ", " + city.getCountry()).getFirst()));
       return cities;
     }
     catch (JsonProcessingException jpe) {
@@ -276,7 +275,6 @@ public class ItineraryService {
     String aiResponse = googleAiService.suggestActivities(
         itinerary.getDestination(),
         interestNames,
-        itinerary.getBudgetRange(),
         dayNumber,
         itinerary.getNumberOfDays(),
         previousActivitiesForDayNames,
@@ -287,8 +285,10 @@ public class ItineraryService {
     logger.debug("AI Response for activity suggestions: {}", aiResponse);
 
     try {
-      return objectMapper.readValue(aiResponse, new TypeReference<>() {
-      });
+      List<SuggestedActivityDto> suggestedActivities = objectMapper.readValue(aiResponse, new TypeReference<>(){});
+      suggestedActivities.forEach(activity ->
+          activity.setImage(this.googleCseService.searchImages(activity.getName() + " " + activity.getDescription()).getFirst()));
+      return suggestedActivities;
     }
     catch (JsonProcessingException jpe) {
       logger.error("JSON Parsing Error for activity suggestions AI Response: '{}', Exception: {}", aiResponse, jpe.getMessage());

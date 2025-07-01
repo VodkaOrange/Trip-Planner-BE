@@ -7,15 +7,20 @@ public class SuggestedActivityDto {
     private String description;
     private double expectedDurationHours;
     private double estimatedCostEUR;
+    private String image;
+    private String address;
 
     public SuggestedActivityDto() {}
 
-    public SuggestedActivityDto(String name, String city, String description, double expectedDurationHours, double estimatedCostEUR) {
+    public SuggestedActivityDto(String name, String city, String description, double expectedDurationHours, double estimatedCostEUR,
+        String image, String address) {
         this.name = name;
         this.city = city;
         this.description = description;
         this.expectedDurationHours = expectedDurationHours;
         this.estimatedCostEUR = estimatedCostEUR;
+        this.image = image;
+        this.address = address;
     }
 
     public String getName() {
@@ -56,5 +61,25 @@ public class SuggestedActivityDto {
 
     public void setEstimatedCostEUR(double estimatedCostEUR) {
         this.estimatedCostEUR = estimatedCostEUR;
+    }
+
+    public String getImage() {
+
+        return image;
+    }
+
+    public void setImage(String image) {
+
+        this.image = image;
+    }
+
+    public String getAddress() {
+
+        return address;
+    }
+
+    public void setAddress(String address) {
+
+        this.address = address;
     }
 }
