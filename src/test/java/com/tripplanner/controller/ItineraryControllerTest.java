@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tripplanner.dto.DestinationPreferencesRequest;
 import com.tripplanner.dto.ItineraryRequest;
-import com.tripplanner.dto.ai.SuggestedCountryDto;
+import com.tripplanner.dto.ai.SuggestedCityDto;
 import com.tripplanner.entity.Itinerary;
 import com.tripplanner.exception.GlobalExceptionHandler;
 import com.tripplanner.service.GoogleAiService;
@@ -138,13 +138,13 @@ class ItineraryControllerTest {
     DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
     preferencesRequest.setPreferences(List.of("nature", "history"));
 
-    List<SuggestedCountryDto> mockSuggestions = List.of(
-        new SuggestedCountryDto("CountryA", "Overview A", "placeholder_image_for_CountryA"),
-        new SuggestedCountryDto("CountryB", "Overview B", "placeholder_image_for_CountryB")
+    List<SuggestedCityDto> mockSuggestions = List.of(
+        new SuggestedCityDto("CountryA", "CityA", "Overview A", "placeholder_image_for_CountryA"),
+        new SuggestedCityDto("CountryB", "CityA", "Overview B", "placeholder_image_for_CountryB")
     );
     String mockJsonResponse = objectMapper.writeValueAsString(mockSuggestions);
 
-    when(googleAiService.suggestCountries(anyList())).thenReturn(mockJsonResponse);
+    when(googleAiService.suggestCities(anyList())).thenReturn(mockJsonResponse);
 
     mockMvc.perform(post("/api/trip/suggestions/countries")
             .contentType(MediaType.APPLICATION_JSON)
@@ -164,7 +164,7 @@ class ItineraryControllerTest {
     preferencesRequest.setPreferences(List.of("beaches"));
 
     String errorJsonResponseFromAi = "{\"error\":\"AI service unavailable\"}";
-    when(googleAiService.suggestCountries(anyList())).thenReturn(errorJsonResponseFromAi);
+    when(googleAiService.suggestCities(anyList())).thenReturn(errorJsonResponseFromAi);
 
     mockMvc.perform(post("/api/trip/suggestions/countries")
             .contentType(MediaType.APPLICATION_JSON)
@@ -182,7 +182,7 @@ class ItineraryControllerTest {
     preferencesRequest.setPreferences(List.of("mountains"));
 
     String malformedJsonResponseFromAi = "[{\"country\":\"CountryC\", \"overview\":\"Overview C\"";
-    when(googleAiService.suggestCountries(anyList())).thenReturn(malformedJsonResponseFromAi);
+    when(googleAiService.suggestCities(anyList())).thenReturn(malformedJsonResponseFromAi);
 
     mockMvc.perform(post("/api/trip/suggestions/countries")
             .contentType(MediaType.APPLICATION_JSON)
@@ -198,7 +198,7 @@ class ItineraryControllerTest {
     DestinationPreferencesRequest preferencesRequest = new DestinationPreferencesRequest();
     preferencesRequest.setPreferences(Collections.emptyList());
 
-    mockMvc.perform(post("/api/trip/suggestions/countries")
+    mockMvc.perform(post("/api/trip/suggestions/cities")
             .contentType(MediaType.APPLICATION_JSON)
             .content(objectMapper.writeValueAsString(preferencesRequest))
             .with(csrf()))
