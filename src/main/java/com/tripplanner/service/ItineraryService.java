@@ -184,6 +184,7 @@ public class ItineraryService {
         activityRequest.getName(),
         activityRequest.getCity(),
         activityRequest.getDescription(),
+        activityRequest.getAddress(),
         activityRequest.getExpectedDurationHours(),
         activityRequest.getEstimatedCostEUR()
     );

@@ -12,6 +12,7 @@ public class AddActivityRequest {
 
     private String city;
     private String description;
+    private String address;
 
     @NotNull(message = "Expected duration cannot be null")
     @Min(value = 0, message = "Expected duration must be positive or zero")
@@ -37,13 +38,15 @@ public class AddActivityRequest {
         this.city = city;
     }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getDescription() {return description;}
 
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getAddress() {return address;}
+
+    public void setAddress(String address) {this.address = address; }
 
     public Double getExpectedDurationHours() {
         return expectedDurationHours;

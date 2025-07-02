@@ -7,14 +7,17 @@ public class ActivityDto {
     private String name;
     private String city;
     private String description;
+    private String address;
     private double expectedDurationHours;
     private double estimatedCostEUR;
 
-    public ActivityDto(Long id, String name, String city, String description, double expectedDurationHours, double estimatedCostEUR) {
+    public ActivityDto(Long id, String name, String city, String description, String address, double expectedDurationHours,
+        double estimatedCostEUR) {
         this.id = id;
         this.name = name;
         this.city = city;
         this.description = description;
+        this.address = address;
         this.expectedDurationHours = expectedDurationHours;
         this.estimatedCostEUR = estimatedCostEUR;
     }
@@ -25,6 +28,7 @@ public class ActivityDto {
                 activity.getName(),
                 activity.getCity(),
                 activity.getDescription(),
+                activity.getAddress(),
                 activity.getExpectedDurationHours(),
                 activity.getEstimatedCostEUR()
         );
@@ -61,6 +65,10 @@ public class ActivityDto {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getAddress() {return address;}
+
+    public void setAddress(String address) {this.address = address; }
 
     public double getExpectedDurationHours() {
         return expectedDurationHours;

@@ -17,6 +17,7 @@ public class Activity {
 
     private String city;
     private String description;
+    private String address;
     private double expectedDurationHours;
 
     @PositiveOrZero
@@ -29,10 +30,12 @@ public class Activity {
     public Activity() {
     }
 
-    public Activity(String name, String city, String description, double expectedDurationHours, double estimatedCostEUR) {
+    public Activity(String name, String city, String description, String address, double expectedDurationHours,
+        double estimatedCostEUR) {
         this.name = name;
         this.city = city;
         this.description = description;
+        this.address = address;
         this.expectedDurationHours = expectedDurationHours;
         this.estimatedCostEUR = estimatedCostEUR;
     }
@@ -68,6 +71,10 @@ public class Activity {
     public void setDescription(String description) {
         this.description = description;
     }
+
+    public String getAddress() {return address;}
+
+    public void setAddress(String address) {this.address = address; }
 
     public double getExpectedDurationHours() {
         return expectedDurationHours;
