@@ -61,6 +61,6 @@ public class SecurityConfig {
 
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
+        return http.cors(AbstractHttpConfigurer::disable).build();
     }
 }
