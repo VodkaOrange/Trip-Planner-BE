@@ -50,7 +50,8 @@ public class GoogleAiService {
         String prompt = String.format(
             "You are an expert travel advisor.\n"
                 + "Suggest exactly three distinct cities for a tourist whose preferences are: [%s].\n"
-                + "Keep the response in a strict JSON format as the one below. Do not allow invalid JSON to be returned."
+                + "Keep the response in a strict JSON format as the one below. Do not allow invalid JSON to be returned. Escape"
+                + " quotes when necessary.\n"
                 + "For each city, provide:\n"
                 + "- country: The name of the country (String).\n"
                 + "- city: The name of the city (String).\n"
@@ -141,7 +142,8 @@ public class GoogleAiService {
         ));
         promptBuilder.append("If multiple activities are suggested, their combined duration is not constrained, but individual activities must be plannable within the remaining time. Prioritize variety and user interests.\n");
 
-        promptBuilder.append("Keep the response in a strict JSON format as the one below. Do not allow invalid JSON to be returned.\n");
+        promptBuilder.append("Keep the response in a strict JSON format as the one below. Do not allow invalid JSON to be "
+            + "returned. Escape quotes when necessary.\n");
         promptBuilder.append("For each activity, provide the following details in JSON format:\n"
             + "- name: Name of the activity (String)\n"
             + "- city: The city where the activity is located. This might be %s or a nearby city. (String)\n"
