@@ -27,6 +27,7 @@ public class GoogleCseService {
         .queryParam("q", query)
         .queryParam("searchType", "image")
         .queryParam("num", 1)
+        .queryParam("fields", "items(link)")
         .build()
         .toUriString();
 
